@@ -46,6 +46,10 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/*.version"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/DEPENDENCIES"
         }
     }
 
@@ -126,6 +130,13 @@ dependencies {
 
     // ── LiteRT-LM (Gemma inference — replaces tasks-genai) ───────────────────
     implementation(libs.litertlm)
+
+    // ── PDFBox Android (PDF text extraction) ─────────────────────────────────
+    implementation(libs.pdfbox.android)
+
+    // ── OkHttp (ASTP relay HTTP + SSE) ───────────────────────────────────────
+    implementation(libs.okhttp.core)
+    implementation(libs.okhttp.sse)
 
     // ── Tests ─────────────────────────────────────────────────────────────────
     testImplementation(libs.junit)

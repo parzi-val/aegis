@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aegis — Secure Record Viewer</title>
+<link rel="stylesheet" href="/static/doctor.css">
+</head>
+<body>
+
+<div class="page-header">
+  <div class="header-brand">
+    <svg class="brand-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="white" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1zm0 2.18 7 3.12V11c0 4.52-3.08 8.76-7 9.93C8.08 19.76 5 15.52 5 11V6.3l7-3.12z"/>
+      <path fill="white" d="M10.5 13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13z"/>
+    </svg>
+    <div>
+      <div class="brand">Aegis</div>
+      <div class="subtitle">Secure Health Record Transfer</div>
+    </div>
+  </div>
+  <div class="security-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path fill="white" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5L12 1zm0 2.18 7 3.12V11c0 4.52-3.08 8.76-7 9.93C8.08 19.76 5 15.52 5 11V6.3l7-3.12z"/>
+      <path fill="white" d="M10.5 13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13z"/>
+    </svg>
+    End-to-end encrypted · ASTP v1.1
+  </div>
+</div>
+
+<div class="container">
+  <div id="status-panel">
+    <div class="status-card" id="status-card">
+      <div class="spinner" id="spinner"></div>
+      <div class="status-title" id="status-title">Connecting…</div>
+      <div class="status-sub" id="status-sub"></div>
+      <div id="sas-area" style="display:none">
+        <div class="sas-box" id="sas-digits"></div>
+        <div class="sas-label">Verification code</div>
+        <div class="sas-instruction">
+          <strong>Ask the patient to confirm this code matches their screen</strong><br>
+          before they tap Approve. If the codes differ, an attacker may be present — ask the patient to tap Deny.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="records"></div>
+</div>
+
+<script src="/static/doctor.js"></script>
+</body>
+</html>

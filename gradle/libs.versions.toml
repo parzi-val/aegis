@@ -26,6 +26,8 @@ datastore = "1.1.2"
 securityCrypto = "1.1.0-alpha06"
 generativeai = "0.9.0"
 litertlm = "0.12.0"
+pdfbox = "2.0.27.0"
+okhttp = "4.12.0"
 
 [libraries]
 # Core
@@ -93,6 +95,13 @@ generativeai = { group = "com.google.ai.client.generativeai", name = "generative
 
 # LiteRT-LM (Gemma inference — replaces tasks-genai)
 litertlm = { group = "com.google.ai.edge.litertlm", name = "litertlm-android", version.ref = "litertlm" }
+
+# PDFBox Android (PDF text extraction)
+pdfbox-android = { group = "com.tom-roush", name = "pdfbox-android", version.ref = "pdfbox" }
+
+# OkHttp (ASTP relay HTTP + SSE)
+okhttp-core = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-sse  = { group = "com.squareup.okhttp3", name = "okhttp-sse", version.ref = "okhttp" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }

@@ -20,20 +20,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.aegis.data.ml.GemmaInferenceHolder
 import com.example.aegis.navigation.AegisNavGraph
 import com.example.aegis.navigation.Screen
 import com.example.aegis.navigation.bottomNavRoutes
 import com.example.aegis.ui.theme.AegisTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
+
+    @Inject lateinit var inferenceHolder: GemmaInferenceHolder
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Warm the engine at launch so the first extraction doesn't pay the load cost.
+        if (inferenceHolder.isModelAvailable) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try { inferenceHolder.getOrLoad() } catch (_: Exception) {}
+            }
+        }
+
         setContent {
             AegisTheme {
                 val navController = rememberNavController()

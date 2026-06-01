@@ -120,6 +120,11 @@ fun VaultScreen(onNavigateToDetail: (Long) -> Unit = {}) {
         },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Text(
+                text = "My Documents",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            )
             FilterRow(activeFilter = activeFilter, onSelect = { vm.setFilter(it) })
             if (docs.isEmpty()) {
                 EmptyVaultState(onUpload = { vm.showSourceSheet = true })

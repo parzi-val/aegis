@@ -4,15 +4,21 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.example.aegis.data.db.dao.AllergyDao
 import com.example.aegis.data.db.dao.ConditionDao
+import com.example.aegis.data.db.dao.ConditionSuggestionDao
 import com.example.aegis.data.db.dao.DocumentDao
 import com.example.aegis.data.db.dao.MedicationDao
+import com.example.aegis.data.db.dao.MedicationSuggestionDao
 import com.example.aegis.data.db.dao.PatientDao
+import com.example.aegis.data.db.dao.ShareAuditDao
 import com.example.aegis.data.db.dao.VisitLogDao
 import com.example.aegis.data.db.entity.AllergyEntity
 import com.example.aegis.data.db.entity.ConditionEntity
+import com.example.aegis.data.db.entity.ConditionSuggestionEntity
 import com.example.aegis.data.db.entity.DocumentEntity
 import com.example.aegis.data.db.entity.MedicationEntity
+import com.example.aegis.data.db.entity.MedicationSuggestionEntity
 import com.example.aegis.data.db.entity.PatientEntity
+import com.example.aegis.data.db.entity.ShareAuditEntity
 import com.example.aegis.data.db.entity.VisitLogEntity
 
 @Database(
@@ -23,8 +29,11 @@ import com.example.aegis.data.db.entity.VisitLogEntity
         AllergyEntity::class,
         DocumentEntity::class,
         VisitLogEntity::class,
+        ConditionSuggestionEntity::class,
+        MedicationSuggestionEntity::class,
+        ShareAuditEntity::class,
     ],
-    version = 2,
+    version = 5,
     exportSchema = true,
 )
 abstract class AegisDatabase : RoomDatabase() {
@@ -34,4 +43,7 @@ abstract class AegisDatabase : RoomDatabase() {
     abstract fun allergyDao(): AllergyDao
     abstract fun documentDao(): DocumentDao
     abstract fun visitLogDao(): VisitLogDao
+    abstract fun conditionSuggestionDao(): ConditionSuggestionDao
+    abstract fun medicationSuggestionDao(): MedicationSuggestionDao
+    abstract fun shareAuditDao(): ShareAuditDao
 }

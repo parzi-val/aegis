@@ -23,18 +23,21 @@ class GemmaInferenceHolder @Inject constructor(
 ) {
     private var engine: Engine? = null
     private val loadMutex = Mutex()
+    private val sessionMutex = Mutex()
 
+    // OBB dir survives "Clear App Data" (unlike getExternalFilesDir).
+    // Push once: adb push gemma4e2b.litertlm /sdcard/Android/obb/com.example.aegis/gemma4e2b.litertlm
     val modelPath: String
-        get() = File(context.getExternalFilesDir(null), MODEL_FILE_NAME).absolutePath
+        get() {
+            val dir = context.obbDir.also { it.mkdirs() }
+            return File(dir, MODEL_FILE_NAME).absolutePath
+        }
 
     val isModelAvailable: Boolean
         get() = File(modelPath).exists()
 
     val isLoaded: Boolean
         get() = engine != null
-
-    val cachedEngine: Engine?
-        get() = engine
 
     @OptIn(ExperimentalApi::class)
     suspend fun getOrLoad(): Engine = loadMutex.withLock {
@@ -54,12 +57,18 @@ class GemmaInferenceHolder @Inject constructor(
         }
     }
 
-    fun newConversation(engine: Engine, temperature: Double = 1.0): Conversation =
-        engine.createConversation(
-            ConversationConfig(
-                samplerConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = temperature),
-            )
-        )
+    // Serialises all conversation usage across the app — only one session at a time.
+    // Conversation.use{} (AutoCloseable) guarantees close() is called after the block.
+    suspend fun <T> withSession(temperature: Double = 1.0, block: suspend (Conversation) -> T): T {
+        val eng = getOrLoad()
+        return sessionMutex.withLock {
+            eng.createConversation(
+                ConversationConfig(
+                    samplerConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = temperature),
+                )
+            ).use { conversation -> block(conversation) }
+        }
+    }
 
     fun reset() {
         engine?.close()

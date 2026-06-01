@@ -13,11 +13,13 @@ class DocumentRepository @Inject constructor(
 ) {
     val allDocuments: Flow<List<DocumentEntity>> = documentDao.getAllDocuments()
     val allDocumentsByDate: Flow<List<DocumentEntity>> = documentDao.getAllByDate()
+    val providerSuggestions: Flow<List<String>> = documentDao.getDistinctProviderNames()
 
     suspend fun addDocument(document: DocumentEntity): Long = documentDao.insert(document)
     suspend fun updateDocument(document: DocumentEntity) = documentDao.update(document)
     suspend fun deleteDocument(document: DocumentEntity) = documentDao.delete(document)
     suspend fun getDocumentById(id: Long): DocumentEntity? = documentDao.getById(id)
+    suspend fun getDocumentsByIds(ids: List<Long>): List<DocumentEntity> = documentDao.getByIds(ids)
     fun getDocumentByIdAsFlow(id: Long): Flow<DocumentEntity?> = documentDao.getByIdAsFlow(id)
 
     // Multi-dimensional vault views

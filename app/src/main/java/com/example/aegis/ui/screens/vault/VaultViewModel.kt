@@ -14,6 +14,7 @@ import com.example.aegis.data.ml.GemmaExtractionService
 import com.example.aegis.data.model.DocumentType
 import com.example.aegis.data.repository.DocumentRepository
 import com.example.aegis.data.repository.HealthProfileRepository
+import com.example.aegis.data.repository.SuggestionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ class VaultViewModel @Inject constructor(
     private val documentRepository: DocumentRepository,
     healthProfileRepository: HealthProfileRepository,
     private val extractionService: GemmaExtractionService,
+    private val suggestionRepository: SuggestionRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -154,17 +156,19 @@ class VaultViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val result = extractionService.extract(localPath, mimeType)
             val existing = documentRepository.getDocumentById(docId) ?: return@launch
-            documentRepository.updateDocument(
-                existing.copy(
-                    ocrText = result.ocrText ?: existing.ocrText,
-                    documentType = result.documentType
-                        .takeIf { it != "UNKNOWN" } ?: existing.documentType,
-                    providerName = result.providerName.ifBlank { existing.providerName },
-                    documentDate = result.documentDate ?: existing.documentDate,
-                    extractedFields = result.extractedFieldsJson ?: result.errorMessage ?: existing.extractedFields,
-                    extractionState = result.state,
-                ),
+            val updated = existing.copy(
+                ocrText = result.ocrText ?: existing.ocrText,
+                documentType = result.documentType
+                    .takeIf { it != "UNKNOWN" } ?: existing.documentType,
+                providerName = result.providerName.ifBlank { existing.providerName },
+                documentDate = result.documentDate ?: existing.documentDate,
+                extractedFields = result.extractedFieldsJson ?: result.errorMessage ?: existing.extractedFields,
+                extractionState = result.state,
             )
+            documentRepository.updateDocument(updated)
+            if (result.state == "DONE" && result.extractedFieldsJson != null) {
+                suggestionRepository.processExtraction(docId, result.extractedFieldsJson)
+            }
         }
     }
 

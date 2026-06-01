@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Image
@@ -38,16 +40,25 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +69,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.example.aegis.data.db.entity.DocumentEntity
+import com.example.aegis.data.db.entity.ShareAuditEntity
 import com.example.aegis.data.model.DocumentType
 import java.io.File
 import java.time.Instant
@@ -70,6 +82,7 @@ fun DocumentDetailScreen(onBack: () -> Unit) {
     val doc by vm.document.collectAsStateWithLifecycle()
     val conditionName by vm.conditionName.collectAsStateWithLifecycle()
     val pipelineLogs by vm.pipelineLogs.collectAsStateWithLifecycle()
+    val shareAudits by vm.shareAudits.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -110,6 +123,8 @@ fun DocumentDetailScreen(onBack: () -> Unit) {
                 doc = doc!!,
                 conditionName = conditionName,
                 pipelineLogs = pipelineLogs,
+                shareAudits = shareAudits,
+                onSaveAuditNote = vm::saveAuditNote,
                 modifier = Modifier.padding(padding),
             )
         }
@@ -141,6 +156,8 @@ private fun DetailContent(
     doc: DocumentEntity,
     conditionName: String?,
     pipelineLogs: List<String>,
+    shareAudits: List<ShareAuditEntity>,
+    onSaveAuditNote: (Long, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -204,6 +221,7 @@ private fun DetailContent(
             if (doc.extractionState == "DONE" && doc.extractedFields != null) {
                 ExtractionBlock(doc.extractedFields)
             }
+            if (shareAudits.isNotEmpty()) ShareHistoryPanel(shareAudits, onSaveAuditNote)
             if (pipelineLogs.isNotEmpty()) PipelineLogsPanel(pipelineLogs)
         }
     }
@@ -351,10 +369,13 @@ private fun MetaRow(label: String, value: String) {
     }
 }
 
-// ── Pipeline debug panel ──────────────────────────────────────────────────────
+// ── Share history panel ───────────────────────────────────────────────────────
 
 @Composable
-private fun PipelineLogsPanel(logs: List<String>) {
+private fun ShareHistoryPanel(
+    audits: List<ShareAuditEntity>,
+    onSaveNote: (Long, String) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Surface(
         shape = RoundedCornerShape(10.dp),
@@ -371,7 +392,7 @@ private fun PipelineLogsPanel(logs: List<String>) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Pipeline logs (${logs.size})",
+                    text = "Share history (${audits.size})",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -379,6 +400,134 @@ private fun PipelineLogsPanel(logs: List<String>) {
                     text = if (expanded) "▲" else "▼",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (expanded) {
+                HorizontalDivider()
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    audits.forEach { entry ->
+                        ShareAuditEntryRow(entry = entry, onSaveNote = onSaveNote)
+                        if (entry != audits.last()) HorizontalDivider()
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShareAuditEntryRow(
+    entry: ShareAuditEntity,
+    onSaveNote: (Long, String) -> Unit,
+) {
+    var note by rememberSaveable(entry.id) { mutableStateOf(entry.userNote) }
+    var isDirty by remember(entry.id) { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = entry.action.replace('_', ' ').replaceFirstChar { it.uppercaseChar() },
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+            )
+            Text(
+                text = entry.timestamp.toShareDate(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (entry.deviceHint.isNotBlank()) {
+            Text(
+                text = entry.deviceHint,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            OutlinedTextField(
+                value = note,
+                onValueChange = { note = it; isDirty = true },
+                placeholder = {
+                    Text("Add a note…", style = MaterialTheme.typography.bodySmall)
+                },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodySmall,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    if (isDirty) { onSaveNote(entry.id, note); isDirty = false }
+                }),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
+            )
+            if (isDirty) {
+                IconButton(onClick = { onSaveNote(entry.id, note); isDirty = false }) {
+                    Icon(
+                        Icons.Outlined.Check,
+                        contentDescription = "Save note",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ── Pipeline debug panel ──────────────────────────────────────────────────────
+
+@Composable
+private fun PipelineLogsPanel(logs: List<String>) {
+    var expanded by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboardManager.current
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Pipeline logs (${logs.size})",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(
+                    onClick = { clipboard.setText(AnnotatedString(logs.joinToString("\n"))) },
+                ) {
+                    Icon(
+                        Icons.Outlined.ContentCopy,
+                        contentDescription = "Copy logs",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Text(
+                    text = if (expanded) "▲" else "▼",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 10.dp),
                 )
             }
             if (expanded) {
@@ -466,6 +615,11 @@ private fun detailTypeIcon(typeName: String): ImageVector = when (typeName) {
 
 private val docDateFmt = DateTimeFormatter.ofPattern("d MMM yyyy")
 private val uploadDateFmt = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a")
+
+private val shareDateFmt = DateTimeFormatter.ofPattern("d MMM, h:mm a")
+
+private fun Long.toShareDate(): String =
+    Instant.ofEpochSecond(this).atZone(ZoneId.systemDefault()).format(shareDateFmt)
 
 private fun Long.toDocDate(): String =
     Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).format(docDateFmt)

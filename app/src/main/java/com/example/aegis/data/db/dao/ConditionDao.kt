@@ -28,4 +28,7 @@ interface ConditionDao {
 
     @Query("SELECT * FROM condition WHERE id = :id")
     suspend fun getById(id: Long): ConditionEntity?
+
+    @Query("SELECT name FROM condition")
+    suspend fun getAllNames(): List<String>
 }

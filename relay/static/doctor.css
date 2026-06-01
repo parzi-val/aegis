@@ -1,0 +1,307 @@
+@import url('https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;0,7..72,700;1,7..72,400;1,7..72,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Literata', Georgia, serif;
+  font-size: 14px;
+  color: #1a1c1b;
+  background: #f9f9f7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.page-header {
+  background: #002045;
+  color: white;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  opacity: 0.95;
+}
+.page-header .brand {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.page-header .subtitle {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 10px;
+  opacity: 0.6;
+  margin-top: 2px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+.security-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+
+.container { max-width: 720px; margin: 28px auto; padding: 0 16px 48px; }
+
+/* ── Status card ─────────────────────────────────────────────────────────── */
+
+.status-card {
+  background: white;
+  border-radius: 16px;
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.06);
+}
+.status-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #002045;
+  margin-bottom: 8px;
+}
+.status-sub {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid #e8eef8;
+  border-top-color: #002045;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SAS ─────────────────────────────────────────────────────────────────── */
+
+.sas-box {
+  margin: 24px auto 8px;
+  display: inline-flex;
+  gap: 8px;
+}
+.sas-digit {
+  width: 44px; height: 56px;
+  background: #d6e3ff;
+  border: 2px solid #adc7f7;
+  border-radius: 10px;
+  font-size: 26px;
+  font-weight: 700;
+  color: #002045;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sas-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.sas-instruction {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: left;
+  line-height: 1.6;
+  color: #78350f;
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+
+.error-card {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 24px;
+  color: #7f1d1d;
+}
+.error-title { font-weight: 600; margin-bottom: 8px; }
+
+/* ── Records ─────────────────────────────────────────────────────────────── */
+
+#records { display: none; }
+
+.records-header {
+  background: white;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.patient-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+.patient-meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 3px;
+  font-weight: 500;
+}
+.patient-meta span { margin-right: 12px; }
+
+.btn-download {
+  background: #002045;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  letter-spacing: 0.1px;
+}
+.btn-download:hover { background: #001433; }
+.btn-download:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+
+.section {
+  background: white;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+.section-header {
+  background: #002045;
+  color: rgba(255,255,255,0.9);
+  padding: 9px 16px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.section-body { padding: 16px; }
+
+/* ── Tags ────────────────────────────────────────────────────────────────── */
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag {
+  background: #d6e3ff;
+  color: #001b3c;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+.tag.allergy { background: #ffdad6; color: #93000a; }
+
+/* ── Medications ─────────────────────────────────────────────────────────── */
+
+.med-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 7px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.med-row:last-child { border-bottom: none; }
+.med-name { font-weight: 600; min-width: 140px; font-size: 13px; }
+.med-detail { color: #6b7280; font-size: 12px; }
+
+/* ── Document cards ──────────────────────────────────────────────────────── */
+
+.doc-card {
+  border: 1px solid #e8eef8;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.doc-card:last-child { margin-bottom: 0; }
+.doc-card-header {
+  background: #f4f6fb;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.doc-type-badge {
+  background: #002045;
+  color: white;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.5px;
+}
+.doc-provider { font-weight: 600; font-size: 13px; color: #111827; }
+.doc-date { font-size: 11px; color: #6b7280; margin-left: auto; font-weight: 500; }
+.doc-fields { padding: 10px 14px; }
+.field-row {
+  display: flex;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.field-key { color: #6b7280; min-width: 130px; font-weight: 500; }
+.field-val { font-weight: 600; color: #111827; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.transfer-footer {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  margin: 20px 0 32px;
+  font-weight: 500;
+}
+
+/* ── Print ───────────────────────────────────────────────────────────────── */
+
+@media print {
+  body { background: white; font-size: 12px; }
+  .page-header .security-badge { display: none; }
+  .btn-download, #status-panel { display: none !important; }
+  #records { display: block !important; }
+  .section, .records-header, .doc-card {
+    box-shadow: none;
+    border: 1px solid #e0e0e0;
+    break-inside: avoid;
+  }
+  .container { margin: 0; max-width: 100%; padding: 0; }
+  .page-header { background: #002045 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section-header { background: #002045 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

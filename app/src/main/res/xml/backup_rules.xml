@@ -1,13 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
--->
+<?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- Exclude plaintext document files — encrypted at Phase 12 -->
+    <exclude domain="file" path="documents"/>
+    <!-- Exclude encrypted DB — key is device-bound, backup is useless on another device -->
+    <exclude domain="database" path="aegis.db"/>
+    <!-- Exclude crypto prefs — encrypted passphrase + IV, useless without hardware Keystore key -->
+    <exclude domain="sharedpref" path="aegis_crypto.xml"/>
 </full-backup-content>

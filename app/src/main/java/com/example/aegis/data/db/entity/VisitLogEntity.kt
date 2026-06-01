@@ -14,4 +14,5 @@ data class VisitLogEntity(
     val notes: String = "",
     val followUpDate: Long? = null,
     val linkedDocumentIds: String = "", // comma-separated DocumentEntity ids
+    val conditionTags: String = "",    // comma-separated free-text condition labels
 )

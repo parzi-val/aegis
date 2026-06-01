@@ -8,12 +8,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.aegis.ui.screens.export.ExportScreen
-import com.example.aegis.ui.screens.gemma.GemmaScreen
+import com.example.aegis.ui.screens.transfer.TransferScreen
 import com.example.aegis.ui.screens.home.HomeScreen
 import com.example.aegis.ui.screens.lock.LockScreen
 import com.example.aegis.ui.screens.onboarding.OnboardingScreen
+import com.example.aegis.ui.screens.profile.ProfileScreen
 import com.example.aegis.ui.screens.vault.DocumentDetailScreen
 import com.example.aegis.ui.screens.vault.VaultScreen
+import com.example.aegis.ui.screens.visits.AddVisitScreen
+import com.example.aegis.ui.screens.visits.VisitDetailScreen
 import com.example.aegis.ui.screens.visits.VisitsScreen
 
 @Composable
@@ -51,8 +54,12 @@ fun AegisNavGraph(
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 },
-                onGemmaPoc = { navController.navigate(Screen.GemmaPoc.route) },
+                onAddVisit = { navController.navigate(Screen.AddVisit.route) },
+                onProfile = { navController.navigate(Screen.Profile.route) },
             )
+        }
+        composable(Screen.Profile.route) {
+            ProfileScreen(onBack = { navController.popBackStack() })
         }
         composable(Screen.Vault.route) {
             VaultScreen(
@@ -67,11 +74,50 @@ fun AegisNavGraph(
         ) {
             DocumentDetailScreen(onBack = { navController.popBackStack() })
         }
-        composable(Screen.Visits.route) { VisitsScreen() }
-        composable(Screen.Export.route) { ExportScreen() }
-        composable(Screen.GemmaPoc.route) {
-            GemmaScreen(onBack = { navController.popBackStack() })
+        composable(Screen.Visits.route) {
+            VisitsScreen(
+                onAddVisit = { navController.navigate(Screen.AddVisit.route) },
+                onVisitDetail = { id -> navController.navigate(Screen.VisitDetail.createRoute(id)) },
+            )
         }
+        composable(Screen.AddVisit.route) {
+            AddVisitScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = {
+                    navController.navigate(Screen.Visits.route) {
+                        popUpTo(Screen.AddVisit.route) { inclusive = true }
+                    }
+                },
+            )
+        }
+        composable(
+            route = Screen.VisitDetail.route,
+            arguments = listOf(navArgument("visitId") { type = NavType.LongType }),
+        ) {
+            VisitDetailScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToDocument = { id ->
+                    navController.navigate(Screen.DocumentDetail.createRoute(id))
+                },
+            )
+        }
+        composable(Screen.Export.route) {
+            ExportScreen(
+                onStartTransfer = { docIds ->
+                    navController.navigate(Screen.Transfer.createRoute(docIds))
+                },
+            )
+        }
+        composable(
+            route = Screen.Transfer.route,
+            arguments = listOf(navArgument("docIds") {
+                type = NavType.StringType
+                defaultValue = ""
+            }),
+        ) {
+            TransferScreen(onBack = { navController.popBackStack() })
+        }
+        // TODO Phase 11: GemmaPoc route removed — chatbot will use its own engine instance
     }
 }
 

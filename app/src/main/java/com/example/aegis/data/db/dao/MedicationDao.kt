@@ -28,4 +28,7 @@ interface MedicationDao {
 
     @Query("SELECT * FROM medication WHERE id = :id")
     suspend fun getById(id: Long): MedicationEntity?
+
+    @Query("SELECT name FROM medication")
+    suspend fun getAllNames(): List<String>
 }

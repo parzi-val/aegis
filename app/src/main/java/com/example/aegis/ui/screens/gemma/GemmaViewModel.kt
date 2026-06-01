@@ -12,7 +12,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.aegis.data.ml.GemmaInferenceHolder
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
-import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Message
 import com.google.ai.edge.litertlm.MessageCallback
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,8 +22,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 @HiltViewModel
 class GemmaViewModel @Inject constructor(
@@ -36,7 +38,9 @@ class GemmaViewModel @Inject constructor(
 
     data class ChatMessage(val text: String, val isUser: Boolean, val imageUri: Uri? = null)
 
-    var modelState by mutableStateOf(ModelState.NOT_LOADED)
+    var modelState by mutableStateOf(
+        if (inferenceHolder.isLoaded) ModelState.READY else ModelState.NOT_LOADED
+    )
         private set
     var errorMessage by mutableStateOf("")
         private set
@@ -50,15 +54,6 @@ class GemmaViewModel @Inject constructor(
     private val _partialResponse = MutableStateFlow("")
     val partialResponse: StateFlow<String> = _partialResponse.asStateFlow()
 
-    private var conversation: Conversation? = null
-
-    init {
-        inferenceHolder.cachedEngine?.let {
-            conversation = inferenceHolder.newConversation(it)
-            modelState = ModelState.READY
-        }
-    }
-
     fun loadModel() {
         viewModelScope.launch(Dispatchers.IO) {
             modelState = ModelState.LOADING
@@ -68,8 +63,7 @@ class GemmaViewModel @Inject constructor(
                     modelState = ModelState.ERROR
                     return@launch
                 }
-                val engine = inferenceHolder.getOrLoad()
-                conversation = inferenceHolder.newConversation(engine)
+                inferenceHolder.getOrLoad()
                 modelState = ModelState.READY
             } catch (e: Exception) {
                 errorMessage = e.message ?: "Failed to load model"
@@ -79,9 +73,7 @@ class GemmaViewModel @Inject constructor(
     }
 
     fun send(userText: String) {
-        val conv = conversation ?: return
-        if (isGenerating) return
-
+        if (isGenerating || modelState != ModelState.READY) return
         val imageUri = pendingImageUri
         pendingImageUri = null
         if (userText.isBlank() && imageUri == null) return
@@ -92,33 +84,39 @@ class GemmaViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val callback = object : MessageCallback {
-                    override fun onMessage(message: Message) {
-                        _partialResponse.update { it + message.toString() }
-                    }
-                    override fun onDone() { finishResponse() }
-                    override fun onError(throwable: Throwable) {
-                        _messages.update { it + ChatMessage("Error: ${throwable.message}", isUser = false) }
-                        _partialResponse.value = ""
-                        isGenerating = false
-                    }
-                }
-
-                if (imageUri != null) {
-                    val bytes = loadImageAsBytes(imageUri)
-                    if (bytes != null) {
-                        val parts = buildList {
-                            add(Content.ImageBytes(bytes))
-                            if (userText.isNotBlank()) add(Content.Text(userText))
+                val response = inferenceHolder.withSession { conversation ->
+                    suspendCancellableCoroutine { cont ->
+                        val callback = object : MessageCallback {
+                            val sb = StringBuilder()
+                            override fun onMessage(message: Message) {
+                                sb.append(message.toString())
+                                _partialResponse.update { it + message.toString() }
+                            }
+                            override fun onDone() { cont.resume(sb.toString()) }
+                            override fun onError(throwable: Throwable) {
+                                cont.resumeWithException(throwable)
+                            }
                         }
-                        conv.sendMessageAsync(Contents.of(parts), callback, emptyMap())
-                    } else {
-                        // image load failed, fall back to text
-                        conv.sendMessageAsync(userText, callback)
+                        if (imageUri != null) {
+                            val bytes = loadImageAsBytes(imageUri)
+                            if (bytes != null) {
+                                val parts = buildList {
+                                    add(Content.ImageBytes(bytes))
+                                    if (userText.isNotBlank()) add(Content.Text(userText))
+                                }
+                                conversation.sendMessageAsync(Contents.of(parts), callback, emptyMap())
+                            } else {
+                                conversation.sendMessageAsync(userText, callback)
+                            }
+                        } else {
+                            conversation.sendMessageAsync(userText, callback)
+                        }
+                        cont.invokeOnCancellation { conversation.cancelProcess() }
                     }
-                } else {
-                    conv.sendMessageAsync(userText, callback)
                 }
+                _messages.update { it + ChatMessage(response, isUser = false) }
+                _partialResponse.value = ""
+                isGenerating = false
             } catch (e: Exception) {
                 _messages.update { it + ChatMessage("Error: ${e.message}", isUser = false) }
                 _partialResponse.value = ""
@@ -131,17 +129,6 @@ class GemmaViewModel @Inject constructor(
         _messages.value = emptyList()
         _partialResponse.value = ""
         pendingImageUri = null
-        inferenceHolder.cachedEngine?.let {
-            conversation?.close()
-            conversation = inferenceHolder.newConversation(it)
-        }
-    }
-
-    private fun finishResponse() {
-        val full = _partialResponse.value
-        _messages.update { it + ChatMessage(full, isUser = false) }
-        _partialResponse.value = ""
-        isGenerating = false
     }
 
     private fun loadImageAsBytes(uri: Uri): ByteArray? = try {
@@ -153,10 +140,5 @@ class GemmaViewModel @Inject constructor(
         out.toByteArray()
     } catch (e: Exception) {
         null
-    }
-
-    override fun onCleared() {
-        conversation?.close()
-        super.onCleared()
     }
 }

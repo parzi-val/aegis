@@ -41,4 +41,10 @@ interface DocumentDao {
 
     @Query("SELECT * FROM document WHERE id = :id")
     fun getByIdAsFlow(id: Long): Flow<DocumentEntity?>
+
+    @Query("SELECT * FROM document WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Long>): List<DocumentEntity>
+
+    @Query("SELECT DISTINCT providerName FROM document WHERE providerName != '' ORDER BY providerName ASC")
+    fun getDistinctProviderNames(): Flow<List<String>>
 }

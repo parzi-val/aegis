@@ -9,6 +9,14 @@ sealed class Screen(val route: String) {
         fun createRoute(id: Long) = "vault/detail/$id"
     }
     data object Visits : Screen("visits")
+    data object AddVisit : Screen("visits/add")
+    data object VisitDetail : Screen("visits/detail/{visitId}") {
+        fun createRoute(id: Long) = "visits/detail/$id"
+    }
+    data object Profile : Screen("profile")
     data object Export : Screen("export")
+    data object Transfer : Screen("transfer?docIds={docIds}") {
+        fun createRoute(docIds: List<Long>) = "transfer?docIds=${docIds.joinToString(",")}"
+    }
     data object GemmaPoc : Screen("gemma_poc")
 }
