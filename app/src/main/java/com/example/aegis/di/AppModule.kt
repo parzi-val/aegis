@@ -88,6 +88,13 @@ object AppModule {
             .writeTimeout(30, TimeUnit.SECONDS)
             // readTimeout intentionally not set here — AstpService creates a no-timeout
             // client for SSE via newBuilder() when needed
+            .addInterceptor { chain ->
+                chain.proceed(
+                    chain.request().newBuilder()
+                        .header("ngrok-skip-browser-warning", "true")
+                        .build()
+                )
+            }
             .build()
 
     @Provides @Singleton

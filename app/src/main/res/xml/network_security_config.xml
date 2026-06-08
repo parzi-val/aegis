@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Local dev relay — replace with TLS domain before release -->
+    <!-- Local dev relay and hotspot — replace relay IP with TLS domain before release -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.15.174.196</domain>
+        <domain includeSubdomains="false">192.168.29.59</domain>
     </domain-config>
     <base-config cleartextTrafficPermitted="false" />
 </network-security-config>

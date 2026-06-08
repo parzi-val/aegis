@@ -126,6 +126,6 @@ class AstpService @Inject constructor(
     }
 
     companion object {
-        const val BASE_URL = "http://10.15.174.196:8000"
+        const val BASE_URL = "https://9f2b-2405-201-f00a-2859-8180-967a-b39-b4d7.ngrok-free.app"
     }
 }
