@@ -126,6 +126,6 @@ class AstpService @Inject constructor(
     }
 
     companion object {
-        const val BASE_URL = "https://9f2b-2405-201-f00a-2859-8180-967a-b39-b4d7.ngrok-free.app"
+        val BASE_URL get() = com.example.aegis.BuildConfig.RELAY_URL
     }
 }

@@ -6,6 +6,15 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+fun localProp(key: String, default: String = ""): String =
+    rootProject.file("local.properties")
+        .takeIf { it.exists() }
+        ?.readLines()
+        ?.firstOrNull { it.startsWith("$key=") }
+        ?.removePrefix("$key=")
+        ?.trim()
+        ?: default
+
 android {
     namespace = "com.example.aegis"
     compileSdk = 35
@@ -18,6 +27,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "RELAY_URL",
+            "\"${localProp("relay.url", "http://localhost:3000")}\"")
+        buildConfigField("String", "MODEL_SERVER_URL",
+            "\"${localProp("model.server.url", "http://10.0.2.2:8000")}\"")
     }
 
     buildTypes {
@@ -41,6 +55,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -137,6 +152,14 @@ dependencies {
     // ── OkHttp (ASTP relay HTTP + SSE) ───────────────────────────────────────
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.sse)
+
+    // ── Google Sign-In + Drive (Phase 12) ────────────────────────────────────
+    implementation(libs.play.services.auth)
+
+    // ── WorkManager + Hilt-Work (model download) ──────────────────────────────
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
 
     // ── Tests ─────────────────────────────────────────────────────────────────
     testImplementation(libs.junit)

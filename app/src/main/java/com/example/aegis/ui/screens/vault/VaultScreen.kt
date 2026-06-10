@@ -2,8 +2,8 @@
 package com.example.aegis.ui.screens.vault
 
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts.GetContent
-import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
+import androidx.activity.result.contract.ActivityResultContracts.GetMultipleContents
+import androidx.activity.result.contract.ActivityResultContracts.OpenMultipleDocuments
 import androidx.activity.result.contract.ActivityResultContracts.TakePicture
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -101,11 +101,11 @@ fun VaultScreen(onNavigateToDetail: (Long) -> Unit = {}) {
     val cameraLauncher = rememberLauncherForActivityResult(TakePicture()) { success ->
         if (success) vm.cameraImageUri?.let { vm.onFilePicked(it) }
     }
-    val galleryLauncher = rememberLauncherForActivityResult(GetContent()) { uri ->
-        uri?.let { vm.onFilePicked(it) }
+    val galleryLauncher = rememberLauncherForActivityResult(GetMultipleContents()) { uris ->
+        if (uris.isNotEmpty()) vm.onFilesPicked(uris)
     }
-    val fileLauncher = rememberLauncherForActivityResult(OpenDocument()) { uri ->
-        uri?.let { vm.onFilePicked(it) }
+    val fileLauncher = rememberLauncherForActivityResult(OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) vm.onFilesPicked(uris)
     }
 
     Scaffold(

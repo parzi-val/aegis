@@ -7,10 +7,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.aegis.ui.screens.backup.BackupScreen
 import com.example.aegis.ui.screens.export.ExportScreen
 import com.example.aegis.ui.screens.transfer.TransferScreen
 import com.example.aegis.ui.screens.home.HomeScreen
 import com.example.aegis.ui.screens.lock.LockScreen
+import com.example.aegis.ui.screens.model.ModelSetupScreen
+import com.example.aegis.ui.screens.welcome.WelcomeChoiceScreen
 import com.example.aegis.ui.screens.onboarding.OnboardingScreen
 import com.example.aegis.ui.screens.profile.ProfileScreen
 import com.example.aegis.ui.screens.vault.DocumentDetailScreen
@@ -26,9 +29,18 @@ fun AegisNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Lock.route,
+        startDestination = Screen.ModelSetup.route,
         modifier = modifier,
     ) {
+        composable(Screen.ModelSetup.route) {
+            ModelSetupScreen(
+                onReady = {
+                    navController.navigate(Screen.Lock.route) {
+                        popUpTo(Screen.ModelSetup.route) { inclusive = true }
+                    }
+                },
+            )
+        }
         composable(Screen.Lock.route) {
             LockScreen(
                 onAuthenticated = {
@@ -47,10 +59,22 @@ fun AegisNavGraph(
                 },
             )
         }
+        composable(Screen.WelcomeChoice.route) {
+            WelcomeChoiceScreen(
+                onStartFresh = {
+                    navController.navigate(Screen.Onboarding.route) {
+                        popUpTo(Screen.WelcomeChoice.route) { inclusive = true }
+                    }
+                },
+                onRestoreBackup = {
+                    navController.navigate(Screen.Backup.route)
+                },
+            )
+        }
         composable(Screen.Home.route) {
             HomeScreen(
                 onNeedsOnboarding = {
-                    navController.navigate(Screen.Onboarding.route) {
+                    navController.navigate(Screen.WelcomeChoice.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
                 },
@@ -59,7 +83,10 @@ fun AegisNavGraph(
             )
         }
         composable(Screen.Profile.route) {
-            ProfileScreen(onBack = { navController.popBackStack() })
+            ProfileScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToBackup = { navController.navigate(Screen.Backup.route) },
+            )
         }
         composable(Screen.Vault.route) {
             VaultScreen(
@@ -116,6 +143,9 @@ fun AegisNavGraph(
             }),
         ) {
             TransferScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Backup.route) {
+            BackupScreen(onBack = { navController.popBackStack() })
         }
         // TODO Phase 11: GemmaPoc route removed — chatbot will use its own engine instance
     }

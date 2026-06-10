@@ -33,5 +33,9 @@ gradle/wrapper/dists/
 # Test resources (lab report images, extraction outputs — not for VCS)
 resources/
 
+# Python
+__pycache__/
+*.pyc
+
 # Claude memory
 .claude/

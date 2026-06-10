@@ -31,4 +31,10 @@ interface MedicationDao {
 
     @Query("SELECT name FROM medication")
     suspend fun getAllNames(): List<String>
+
+    @Query("SELECT * FROM medication")
+    suspend fun getAllOnce(): List<MedicationEntity>
+
+    @Query("DELETE FROM medication")
+    suspend fun deleteAll()
 }

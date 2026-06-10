@@ -7,15 +7,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.example.aegis.data.db.entity.DocumentEntity
 import com.example.aegis.data.db.entity.VisitLogEntity
-import com.example.aegis.data.ml.GemmaExtractionService
 import com.example.aegis.data.repository.DocumentRepository
 import com.example.aegis.data.repository.HealthProfileRepository
-import com.example.aegis.data.repository.SuggestionRepository
 import com.example.aegis.data.repository.VisitRepository
+import com.example.aegis.data.worker.ExtractionWorker
 import kotlinx.coroutines.flow.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,8 +32,6 @@ import javax.inject.Inject
 class AddVisitViewModel @Inject constructor(
     private val visitRepository: VisitRepository,
     private val documentRepository: DocumentRepository,
-    private val extractionService: GemmaExtractionService,
-    private val suggestionRepository: SuggestionRepository,
     healthProfileRepository: HealthProfileRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
@@ -55,8 +54,20 @@ class AddVisitViewModel @Inject constructor(
     private val _pendingFiles = mutableStateListOf<Pair<Uri, String>>()
     val pendingFiles: List<Pair<Uri, String>> = _pendingFiles
 
+    var cameraImageUri by mutableStateOf<Uri?>(null)
+        private set
+
     var isSaving by mutableStateOf(false)
         private set
+
+    fun createCameraImageUri(): Uri {
+        val dir = java.io.File(context.cacheDir, "camera").also { it.mkdirs() }
+        val file = java.io.File(dir, "capture_${System.currentTimeMillis()}.jpg")
+        return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            .also { cameraImageUri = it }
+    }
+
+    fun onFilePicked(uri: Uri) = onFilesPicked(listOf(uri))
 
     fun addConditionTag() {
         val tag = conditionTagInput.trim()
@@ -95,7 +106,7 @@ class AddVisitViewModel @Inject constructor(
                                 extractionState = "PENDING",
                             )
                         )
-                        launchExtraction(docId, localPath, mime)
+                        ExtractionWorker.enqueue(WorkManager.getInstance(context), docId)
                         docId
                     }
                 }
@@ -113,25 +124,6 @@ class AddVisitViewModel @Inject constructor(
                 onDone()
             } finally {
                 isSaving = false
-            }
-        }
-    }
-
-    private fun launchExtraction(docId: Long, localPath: String, mimeType: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = extractionService.extract(localPath, mimeType)
-            val existing = documentRepository.getDocumentById(docId) ?: return@launch
-            documentRepository.updateDocument(
-                existing.copy(
-                    documentType = result.documentType.takeIf { it != "UNKNOWN" } ?: existing.documentType,
-                    providerName = result.providerName.ifBlank { existing.providerName },
-                    documentDate = result.documentDate ?: existing.documentDate,
-                    extractedFields = result.extractedFieldsJson ?: result.errorMessage ?: existing.extractedFields,
-                    extractionState = result.state,
-                )
-            )
-            if (result.state == "DONE" && result.extractedFieldsJson != null) {
-                suggestionRepository.processExtraction(docId, result.extractedFieldsJson)
             }
         }
     }

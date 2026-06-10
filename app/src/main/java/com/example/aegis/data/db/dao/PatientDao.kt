@@ -20,4 +20,7 @@ interface PatientDao {
 
     @Delete
     suspend fun delete(patient: PatientEntity)
+
+    @Query("DELETE FROM patient")
+    suspend fun deleteAll()
 }

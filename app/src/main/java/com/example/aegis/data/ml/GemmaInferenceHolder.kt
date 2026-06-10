@@ -25,11 +25,11 @@ class GemmaInferenceHolder @Inject constructor(
     private val loadMutex = Mutex()
     private val sessionMutex = Mutex()
 
-    // OBB dir survives "Clear App Data" (unlike getExternalFilesDir).
-    // Push once: adb push gemma4e2b.litertlm /sdcard/Android/obb/com.example.aegis/gemma4e2b.litertlm
+    // External app-private storage — no permission needed, easy ADB access.
+    // Push: adb push gemma4e2b.litertlm /sdcard/Android/data/com.example.aegis/files/gemma4e2b.litertlm
     val modelPath: String
         get() {
-            val dir = context.obbDir.also { it.mkdirs() }
+            val dir = (context.getExternalFilesDir(null) ?: context.filesDir).also { it.mkdirs() }
             return File(dir, MODEL_FILE_NAME).absolutePath
         }
 
@@ -43,35 +43,47 @@ class GemmaInferenceHolder @Inject constructor(
     suspend fun getOrLoad(): Engine = loadMutex.withLock {
         engine?.also { logger.log("engine cache hit") } ?: run {
             logger.log("engine not cached — loading from $modelPath")
-            ExperimentalFlags.enableSpeculativeDecoding = true
-            val config = EngineConfig(
-                modelPath = modelPath,
-                backend = Backend.GPU(),
-                visionBackend = Backend.GPU(),
-            )
-            Engine(config).also {
-                it.initialize()
-                engine = it
-                logger.log("engine initialized")
+            try {
+                ExperimentalFlags.enableSpeculativeDecoding = true
+                Engine(EngineConfig(
+                    modelPath = modelPath,
+                    backend = Backend.GPU(),
+                    visionBackend = Backend.GPU(),
+                )).also {
+                    it.initialize()
+                    engine = it
+                    logger.log("engine initialized")
+                }
+            } catch (e: Exception) {
+                engine = null
+                logger.log("engine load failed: ${e.message}")
+                throw e
             }
         }
     }
 
     // Serialises all conversation usage across the app — only one session at a time.
     // Conversation.use{} (AutoCloseable) guarantees close() is called after the block.
+    // Resets the engine on any session failure so the next caller gets a clean load.
     suspend fun <T> withSession(temperature: Double = 1.0, block: suspend (Conversation) -> T): T {
         val eng = getOrLoad()
         return sessionMutex.withLock {
-            eng.createConversation(
-                ConversationConfig(
-                    samplerConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = temperature),
-                )
-            ).use { conversation -> block(conversation) }
+            try {
+                eng.createConversation(
+                    ConversationConfig(
+                        samplerConfig = SamplerConfig(topK = 64, topP = 0.95, temperature = temperature),
+                    )
+                ).use { conversation -> block(conversation) }
+            } catch (e: Exception) {
+                logger.log("session failed, resetting engine: ${e.message}")
+                reset()
+                throw e
+            }
         }
     }
 
     fun reset() {
-        engine?.close()
+        try { engine?.close() } catch (_: Exception) {}
         engine = null
     }
 

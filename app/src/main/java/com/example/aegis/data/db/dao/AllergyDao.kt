@@ -22,4 +22,10 @@ interface AllergyDao {
 
     @Query("SELECT * FROM allergy ORDER BY substance ASC")
     fun getAllAllergies(): Flow<List<AllergyEntity>>
+
+    @Query("SELECT * FROM allergy")
+    suspend fun getAllOnce(): List<AllergyEntity>
+
+    @Query("DELETE FROM allergy")
+    suspend fun deleteAll()
 }

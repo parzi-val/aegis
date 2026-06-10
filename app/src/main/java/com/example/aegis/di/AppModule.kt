@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.aegis.data.backup.DriveBackupService
 import com.example.aegis.data.crypto.CryptoManager
 import com.example.aegis.data.db.AegisDatabase
 import com.example.aegis.data.db.dao.AllergyDao
@@ -80,6 +81,10 @@ object AppModule {
             .fallbackToDestructiveMigration()
             .build()
     }
+
+    @Provides @Singleton
+    fun provideDriveBackupService(okhttp: OkHttpClient): DriveBackupService =
+        DriveBackupService(okhttp)
 
     @Provides @Singleton
     fun provideOkHttpClient(): OkHttpClient =

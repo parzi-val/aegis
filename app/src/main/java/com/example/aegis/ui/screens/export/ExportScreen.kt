@@ -60,7 +60,7 @@ fun ExportScreen(
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.size(8.dp))
-                    Text("Transfer via Relay")
+                    Text("Transfer")
                 }
             }
         },

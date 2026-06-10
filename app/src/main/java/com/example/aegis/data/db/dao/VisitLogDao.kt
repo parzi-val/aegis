@@ -25,4 +25,10 @@ interface VisitLogDao {
 
     @Query("SELECT * FROM visit_log WHERE id = :id")
     suspend fun getById(id: Long): VisitLogEntity?
+
+    @Query("SELECT * FROM visit_log")
+    suspend fun getAllOnce(): List<VisitLogEntity>
+
+    @Query("DELETE FROM visit_log")
+    suspend fun deleteAll()
 }

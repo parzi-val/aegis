@@ -47,4 +47,10 @@ interface DocumentDao {
 
     @Query("SELECT DISTINCT providerName FROM document WHERE providerName != '' ORDER BY providerName ASC")
     fun getDistinctProviderNames(): Flow<List<String>>
+
+    @Query("SELECT * FROM document")
+    suspend fun getAllOnce(): List<DocumentEntity>
+
+    @Query("DELETE FROM document")
+    suspend fun deleteAll()
 }

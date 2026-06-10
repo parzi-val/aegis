@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -67,7 +68,7 @@ private val genders = listOf("", "Male", "Female", "Non-binary", "Prefer not to 
 private val severities = listOf("Unknown", "Mild", "Moderate", "Severe", "Life-threatening")
 
 @Composable
-fun ProfileScreen(onBack: () -> Unit = {}) {
+fun ProfileScreen(onBack: () -> Unit = {}, onNavigateToBackup: () -> Unit = {}) {
     val vm: ProfileViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
 
@@ -106,6 +107,8 @@ fun ProfileScreen(onBack: () -> Unit = {}) {
                     MedicationsSection(vm, s.data.medications)
                     HorizontalDivider()
                     AllergiesSection(vm, s.data.allergies)
+                    HorizontalDivider()
+                    BackupRestoreRow(onNavigateToBackup)
                     Spacer(Modifier.height(32.dp))
                 }
             }
@@ -425,6 +428,37 @@ private fun ProfileChipRow(text: String, onRemove: () -> Unit) {
                     contentDescription = "Remove",
                     modifier = Modifier.size(16.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BackupRestoreRow(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                Icons.Default.CloudUpload,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Backup & Restore", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "Encrypted backup to Google Drive",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

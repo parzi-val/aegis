@@ -9,12 +9,12 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.WorkManager
 import com.example.aegis.data.db.entity.DocumentEntity
-import com.example.aegis.data.ml.GemmaExtractionService
 import com.example.aegis.data.model.DocumentType
 import com.example.aegis.data.repository.DocumentRepository
 import com.example.aegis.data.repository.HealthProfileRepository
-import com.example.aegis.data.repository.SuggestionRepository
+import com.example.aegis.data.worker.ExtractionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -33,8 +33,6 @@ import javax.inject.Inject
 class VaultViewModel @Inject constructor(
     private val documentRepository: DocumentRepository,
     healthProfileRepository: HealthProfileRepository,
-    private val extractionService: GemmaExtractionService,
-    private val suggestionRepository: SuggestionRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -54,12 +52,14 @@ class VaultViewModel @Inject constructor(
     val conditions = healthProfileRepository.activeConditions
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // Re-queue any docs that were left PENDING from a previous session
+    // Re-enqueue any docs left PENDING from a previous session that may never have been queued.
+    // WorkManager will skip any that already have a pending/running worker.
     init {
+        val wm = WorkManager.getInstance(context)
         viewModelScope.launch(Dispatchers.IO) {
             documentRepository.allDocuments.first()
                 .filter { it.extractionState == "PENDING" }
-                .forEach { doc -> launchExtraction(doc.id, doc.localPath, doc.mimeType) }
+                .forEach { doc -> ExtractionWorker.enqueue(wm, doc.id) }
         }
     }
 
@@ -94,6 +94,7 @@ class VaultViewModel @Inject constructor(
             .also { cameraImageUri = it }
     }
 
+    // Single file (camera or gallery/file with exactly one selection) → show tag sheet.
     fun onFilePicked(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             val (name, mime) = getFileInfo(uri)
@@ -106,6 +107,41 @@ class VaultViewModel @Inject constructor(
                 tagConditionId = null
                 tagDate = null
                 showSourceSheet = false
+            }
+        }
+    }
+
+    // Multi-file selection: skip tag sheet entirely, let Gemma infer metadata.
+    // Single-item list still routes through the tag sheet for manual tagging.
+    fun onFilesPicked(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        if (uris.size == 1) { onFilePicked(uris.first()); return }
+        saveBatch(uris)
+    }
+
+    private fun saveBatch(uris: List<Uri>) {
+        viewModelScope.launch {
+            isSaving = true
+            showSourceSheet = false
+            try {
+                val wm = WorkManager.getInstance(context)
+                withContext(Dispatchers.IO) {
+                    uris.forEach { uri ->
+                        val (name, mime) = getFileInfo(uri)
+                        val localPath = copyToPrivateStorage(uri, name)
+                        val docId = documentRepository.addDocument(
+                            DocumentEntity(
+                                fileName = name,
+                                mimeType = mime,
+                                localPath = localPath,
+                                extractionState = "PENDING",
+                            )
+                        )
+                        ExtractionWorker.enqueue(wm, docId)
+                    }
+                }
+            } finally {
+                isSaving = false
             }
         }
     }
@@ -136,7 +172,7 @@ class VaultViewModel @Inject constructor(
                     ),
                 )
                 pendingUri = null   // dismiss sheet immediately
-                launchExtraction(docId, localPath, mimeType)
+                ExtractionWorker.enqueue(WorkManager.getInstance(context), docId)
             } finally {
                 isSaving = false
             }
@@ -147,28 +183,6 @@ class VaultViewModel @Inject constructor(
         viewModelScope.launch {
             documentRepository.deleteDocument(doc)
             File(doc.localPath).delete()
-        }
-    }
-
-    // ── Extraction ────────────────────────────────────────────────────────────
-
-    private fun launchExtraction(docId: Long, localPath: String, mimeType: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = extractionService.extract(localPath, mimeType)
-            val existing = documentRepository.getDocumentById(docId) ?: return@launch
-            val updated = existing.copy(
-                ocrText = result.ocrText ?: existing.ocrText,
-                documentType = result.documentType
-                    .takeIf { it != "UNKNOWN" } ?: existing.documentType,
-                providerName = result.providerName.ifBlank { existing.providerName },
-                documentDate = result.documentDate ?: existing.documentDate,
-                extractedFields = result.extractedFieldsJson ?: result.errorMessage ?: existing.extractedFields,
-                extractionState = result.state,
-            )
-            documentRepository.updateDocument(updated)
-            if (result.state == "DONE" && result.extractedFieldsJson != null) {
-                suggestionRepository.processExtraction(docId, result.extractedFieldsJson)
-            }
         }
     }
 

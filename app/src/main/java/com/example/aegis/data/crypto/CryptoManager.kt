@@ -35,7 +35,7 @@ class CryptoManager @Inject constructor(
     val isUnlocked: Boolean get() = passphrase != null
 
     fun getPassphrase(): ByteArray =
-        passphrase ?: error("DB passphrase requested before biometric authentication")
+        passphrase?.copyOf() ?: error("DB passphrase requested before biometric authentication")
 
     fun generateKeyIfNeeded() {
         val ks = KeyStore.getInstance(KEYSTORE).apply { load(null) }
@@ -104,6 +104,7 @@ class CryptoManager @Inject constructor(
         passphrase?.fill(0)
         passphrase = null
     }
+
 
     private fun loadKey(): SecretKey =
         KeyStore.getInstance(KEYSTORE).run {

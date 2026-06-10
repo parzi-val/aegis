@@ -18,5 +18,8 @@ sealed class Screen(val route: String) {
     data object Transfer : Screen("transfer?docIds={docIds}") {
         fun createRoute(docIds: List<Long>) = "transfer?docIds=${docIds.joinToString(",")}"
     }
+    data object ModelSetup : Screen("model_setup")
+    data object WelcomeChoice : Screen("welcome_choice")
     data object GemmaPoc : Screen("gemma_poc")
+    data object Backup : Screen("backup")
 }

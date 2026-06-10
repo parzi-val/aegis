@@ -31,4 +31,10 @@ interface ConditionDao {
 
     @Query("SELECT name FROM condition")
     suspend fun getAllNames(): List<String>
+
+    @Query("SELECT * FROM condition")
+    suspend fun getAllOnce(): List<ConditionEntity>
+
+    @Query("DELETE FROM condition")
+    suspend fun deleteAll()
 }

@@ -8,6 +8,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import os
 import secrets
 import time
 import uuid
@@ -17,9 +18,16 @@ from contextlib import asynccontextmanager
 
 import pyotp
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+# ---------------------------------------------------------------------------
+# Model file — place the .litertlm file at relay/resources/model
+# ---------------------------------------------------------------------------
+
+MODEL_FILE_NAME = "gemma4e2b.litertlm"
+MODEL_PATH = str(Path(__file__).parent / "resources" / "models" / MODEL_FILE_NAME)
 
 
 # ---------------------------------------------------------------------------
@@ -293,6 +301,26 @@ async def doctor_page(session_id: str):
     """Serve the doctor browser UI. Session validation is done client-side via /join."""
     html = (Path(__file__).parent / "static" / "doctor.html").read_text(encoding="utf-8")
     return HTMLResponse(html)
+
+
+@app.get("/model/info")
+async def model_info():
+    """Returns model filename and byte size so the app can show a total in the progress bar."""
+    if not MODEL_PATH or not os.path.exists(MODEL_PATH):
+        raise HTTPException(404, "Model file not configured on this relay — set MODEL_PATH env var")
+    return {"name": MODEL_FILE_NAME, "size": os.path.getsize(MODEL_PATH)}
+
+
+@app.get("/model/download")
+async def download_model():
+    """Streams the model file. Content-Length lets the app track progress."""
+    if not MODEL_PATH or not os.path.exists(MODEL_PATH):
+        raise HTTPException(404, "Model file not configured on this relay — set MODEL_PATH env var")
+    return FileResponse(
+        MODEL_PATH,
+        media_type="application/octet-stream",
+        filename=MODEL_FILE_NAME,
+    )
 
 
 @app.get("/health")
