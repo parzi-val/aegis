@@ -4,22 +4,35 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -60,7 +73,14 @@ class MainActivity : FragmentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
                         if (currentRoute in bottomNavRoutes) {
-                            AegisBottomBar(navController, currentRoute)
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                AssistantPill(onClick = {
+                                    navController.navigate(Screen.Assistant.route) {
+                                        launchSingleTop = true
+                                    }
+                                })
+                                AegisBottomBar(navController, currentRoute)
+                            }
                         }
                     },
                 ) { innerPadding ->
@@ -79,6 +99,32 @@ private enum class BottomTab(val screen: Screen, val label: String, val icon: Im
     VAULT(Screen.Vault, "Vault", Icons.Outlined.Folder),
     VISITS(Screen.Visits, "Visits", Icons.Outlined.DateRange),
     EXPORT(Screen.Export, "Export", Icons.Outlined.Share),
+}
+
+@Composable
+private fun AssistantPill(onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onClick,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 4.dp),
+        modifier = Modifier.padding(bottom = 8.dp),
+    ) {
+        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    Icons.Outlined.AutoAwesome,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text("Assistant", fontSize = 14.sp)
+            }
+        }
+    }
 }
 
 @Composable

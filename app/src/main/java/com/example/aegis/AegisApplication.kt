@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.example.aegis.data.emergency.EmergencyNotificationManager
 import com.example.aegis.data.worker.ExtractionWorker
 import com.example.aegis.data.worker.ModelDownloadWorker
 import dagger.hilt.android.HiltAndroidApp
@@ -30,6 +31,9 @@ class AegisApplication : Application(), Configuration.Provider {
             )
             nm.createNotificationChannel(
                 NotificationChannel(ExtractionWorker.CHANNEL_ID, "Document analysis", NotificationManager.IMPORTANCE_LOW)
+            )
+            nm.createNotificationChannel(
+                NotificationChannel(EmergencyNotificationManager.CHANNEL_ID, "Medical ID", NotificationManager.IMPORTANCE_LOW)
             )
         }
     }

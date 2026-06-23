@@ -134,6 +134,9 @@ dependencies {
     // ── Image loading (vault thumbnails) ─────────────────────────────────────
     implementation(libs.coil.compose)
 
+    // ── Markdown rendering (assistant chat) ──────────────────────────────────
+    implementation(libs.markdown.renderer)
+
     // ── DataStore preferences ─────────────────────────────────────────────────
     implementation(libs.datastore.preferences)
 

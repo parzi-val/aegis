@@ -20,6 +20,7 @@ sealed class Screen(val route: String) {
     }
     data object ModelSetup : Screen("model_setup")
     data object WelcomeChoice : Screen("welcome_choice")
+    data object Assistant : Screen("assistant")
     data object GemmaPoc : Screen("gemma_poc")
     data object Backup : Screen("backup")
 }

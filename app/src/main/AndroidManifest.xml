@@ -30,6 +30,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Lock-screen overlay for emergency medical info — no auth required by design -->
+        <activity
+            android:name=".ui.screens.emergency.EmergencyInfoActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Aegis" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

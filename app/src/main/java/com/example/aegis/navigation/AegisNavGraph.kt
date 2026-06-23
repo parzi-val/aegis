@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.aegis.ui.screens.assistant.AssistantScreen
 import com.example.aegis.ui.screens.backup.BackupScreen
 import com.example.aegis.ui.screens.export.ExportScreen
 import com.example.aegis.ui.screens.transfer.TransferScreen
@@ -147,7 +148,9 @@ fun AegisNavGraph(
         composable(Screen.Backup.route) {
             BackupScreen(onBack = { navController.popBackStack() })
         }
-        // TODO Phase 11: GemmaPoc route removed — chatbot will use its own engine instance
+        composable(Screen.Assistant.route) {
+            AssistantScreen(onBack = { navController.popBackStack() })
+        }
     }
 }
 

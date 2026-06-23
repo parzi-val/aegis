@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.aegis.data.db.entity.ConditionSuggestionEntity
 import com.example.aegis.data.db.entity.MedicationSuggestionEntity
 import com.example.aegis.data.db.entity.PatientEntity
+import com.example.aegis.data.emergency.EmergencyNotificationManager
 import com.example.aegis.data.repository.HealthProfileRepository
 import com.example.aegis.data.repository.PatientRepository
 import com.example.aegis.data.repository.SuggestionRepository
@@ -12,6 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,6 +23,7 @@ class HomeViewModel @Inject constructor(
     patientRepository: PatientRepository,
     healthProfileRepository: HealthProfileRepository,
     private val suggestionRepository: SuggestionRepository,
+    private val emergencyNotificationManager: EmergencyNotificationManager,
 ) : ViewModel() {
 
     sealed interface ProfileState {
@@ -52,6 +55,14 @@ class HomeViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = ProfileState.Loading,
     )
+
+    init {
+        viewModelScope.launch {
+            // Wait for the first Loaded state, then pin the emergency notification.
+            profileState.first { it is ProfileState.Loaded }
+            emergencyNotificationManager.show()
+        }
+    }
 
     val conditionSuggestions: StateFlow<List<ConditionSuggestionEntity>> =
         suggestionRepository.pendingConditions
